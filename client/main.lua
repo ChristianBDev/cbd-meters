@@ -55,27 +55,32 @@ end
 
 function RobMeter()
 	local ped = PlayerPedId()
-	local success = exports['qb-minigames']:Skillbar('medium') -- calling like this will just change difficulty and still use 1234
 
 	if Config.Framework == 'qb' then
-		if not OnCooldown and QBCore.Functions.HasItem('screwdriverset') and not IsPedInAnyVehicle(ped, true) then
-			if success then
-				QBCore.Functions.Progressbar('RobMeter', Lang:t('progress.grabcash'), Config.LootTime * 1000, false, true, {
-					disableMovement = true,
-					disableCarMovement = true,
-					disableMouse = false,
-					disableCombat = true,
-				}, {
-					animDict = 'anim@gangops@facility@servers@',
-					anim = 'hotwire',
-					flags = 16,
-				}, {}, {}, function() -- Done
-					PoliceAlert()
-					TriggerServerEvent('cbd-meters:server:RobMeter')
-					StartCooldown()
-				end, function() -- Cancel
+		if not OnCooldown then
+			if QBCore.Functions.HasItem('screwdriverset') and not IsPedInAnyVehicle(ped, true) then
+				local success = exports['qb-minigames']:Skillbar('medium') -- calling like this will just change difficulty and still use 1234
+
+				if success then
+					QBCore.Functions.Progressbar('RobMeter', Lang:t('progress.grabcash'), Config.LootTime * 1000, false, true, {
+						disableMovement = true,
+						disableCarMovement = true,
+						disableMouse = false,
+						disableCombat = true,
+					}, {
+						animDict = 'anim@gangops@facility@servers@',
+						anim = 'hotwire',
+						flags = 16,
+					}, {}, {}, function() -- Done
+						PoliceAlert()
+						TriggerServerEvent('cbd-meters:server:RobMeter')
+						StartCooldown()
+					end, function() -- Cancel
+						QBCore.Functions.Notify(Lang:t('notify.failed'), 'error')
+					end)
+				else
 					QBCore.Functions.Notify(Lang:t('notify.failed'), 'error')
-				end)
+				end
 			end
 		elseif OnCooldown then
 			QBCore.Functions.Notify(Lang:t('notify.cooldown'), 'error')
