@@ -20,4 +20,6 @@ shared_scripts {
 	'locales/*.lua',
 }
 
+dependency 'qb-minigames'
+
 lua54 'yes'
