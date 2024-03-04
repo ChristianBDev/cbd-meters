@@ -9,3 +9,5 @@ QBCore:
 Ox Core: 
  - ox_target | https://github.com/overextended/ox_target
  - ox_inventory | https://github.com/overextended/ox_inventory
+
+**VIDEO**: https://youtu.be/sKGusGWZGSQ
