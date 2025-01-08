@@ -1,120 +1,209 @@
-local QBCore = exports['qb-core']:GetCoreObject()
-OnCooldown = false
+local robbedMeters = {}
+local onCooldown = false
 
-function PoliceAlert()
-	if Config.Framework == 'qb' then
-		TriggerServerEvent('police:server:policeAlert', 'Parking Meter Robbery')         --QB Police Alert
-	elseif Config.Framework == 'ox' then
-		TriggerServerEvent('police:server:CreateBlip', 14, 500, 0, 0, 'Parking Meter Robbery') --OX Police Alert
-	end
+local function startCooldown()
+    onCooldown = true
+    SetTimeout(Config.Cooldown * 1000, function()
+ 		onCooldown = false
+    end)
 end
 
-CreateThread(function()
-	Target()
+local function notifyPlayer(message, _type, time)
+    local notifyType = Config.NotifyType
+    if notifyType == 'qb' then
+        return TriggerEvent('QBCore:Notify', message, _type, time)
+    elseif notifyType == 'mythic_notify' then
+        return exports['mythic_notify']:SendAlert('inform', message, time)
+    elseif notifyType == 'pNotify' then
+        return exports['pNotify']:SendNotification({ text = message, type = _type, timeout = time, layout = 'centerRight' })
+    elseif notifyType == 'esx' then
+        return ESX.ShowNotification(message, _type, time)
+    elseif notifyType == 'ox' then
+        return exports.ox_lib:notify({ description = message, type = _type, position = 'top' })
+    elseif notifyType == 't-notify' then
+        return exports['t-notify']:Alert({ style = 'info', message = message, duration = time, })
+    elseif notifyType == 'wasabi_notify' then
+        return exports.wasabi_notify:notify(_type, message, time, _type)
+    elseif notifyType == 'custom' then
+        return print("You have not set up a custom notify")
+    else
+        return print("You have not configured a notify")
+    end
+end
+
+local function verifyMeterStatus(entity)
+    local entityCoords = GetEntityCoords(entity)
+    for _, hitCoords in pairs(robbedMeters) do
+        if #(entityCoords - hitCoords) < 10.0 then
+            return false
+        end
+    end
+    return true
+end
+
+local function progress()
+    local ped = PlayerPedId()
+    if Config.Progress == 'qb' then
+        exports['progressbar']:Progress({
+            name = "Robbing Meter",
+            duration = Config.LootTime * 1000,
+            label = "Robbing Meter",
+            useWhileDead = false,
+            canCancel = true,
+            controlDisables = {
+                disableMovement = true,
+                disableCarMovement = true,
+                disableMouse = false,
+                disableCombat = false,
+            },
+            animation = {
+                animDict = 'anim@gangops@facility@servers@',
+                anim = 'hotwire',
+                flags = 16,
+            },
+            prop = {},
+            propTwo = {}
+            }, function(cancelled)
+                if not cancelled then
+                ClearPedTasks(ped)
+                startCooldown()
+            else
+                ClearPedTasks(ped)
+            end
+        end)
+    elseif Config.Progress == 'ox' then
+        if lib.progressBar({
+            duration = Config.LootTime * 1000,
+            label = 'Robbing Meter',
+            useWhileDead = false,
+            canCancel = true,
+            disable = {
+                move = true,
+                car = true,
+                mouse = false,
+                combat = false,
+            },
+            animation = {
+                dict = 'anim@gangops@facility@servers@',
+                clip = 'hotwire',
+            },
+        }) then
+            ClearPedTasks(ped)
+            startCooldown()
+        else
+            ClearPedTasks(ped)
+        end
+    end
+end
+
+local function robMeter(entity)
+    local entCoords = GetEntityCoords(entity)
+    local ped = PlayerPedId()
+    TaskTurnPedToFaceCoord(ped, entCoords.x, entCoords.y, entCoords.z, 1000)
+    local success = false
+    if Config.SkillCheck == 'qb' then
+        success = exports['qb-minigames']:Skillbar('easy', '1234')
+    elseif Config.SkillCheck == 'ox' then
+        success = lib.skillCheck({ 'easy', 'easy', 'easy', 'easy' }, { '1', '2', '3', '4' })
+    elseif Config.SkillCheck == 'custom' then
+        -- do custom skillcheck (you need to make this yourself)
+    end
+    if not success then
+        StopAnimTask(ped, dict, animName, 300)
+        notifyPlayer('You Failed The MiniGame', 'error', 5000)
+        return
+    end
+    progress()
+    Wait(Config.LootTime * 1000)
+    local hash = GetEntityModel(entity)
+    TriggerServerEvent('cbd-meters:server:robmeter', hash)
+end
+
+local function target()
+    if Config.Target == 'qb' then
+        exports['qb-target']:AddTargetModel(Config.meterModels, {
+            options = {
+                {
+                    canInteract = function(entity)
+                        if onCooldown then return false end
+                        if not DoesEntityExist(entity) then return false end
+                        return verifyMeterStatus(entity)
+                    end,
+                    action = function(entity)
+                        robMeter(entity)
+                    end,
+                    item = 'screwdriverset',
+                    icon = 'fas fa-coins',
+                    label = "Take some money?",
+                },
+            },
+            distance = 2,
+        })
+    elseif Config.Target == 'ox' then
+        exports.ox_target:addModel(Config.meterModels, {
+            canInteract = function(entity)
+                if onCooldown then return false end
+                if not DoesEntityExist(entity) then return false end
+                return verifyMeterStatus(entity)
+            end,
+            onSelect = function(entity)
+                robMeter(entity.entity)
+            end,
+            icon = 'fa-solid fa-coins',
+            items = 'screwdriverset',
+            label = 'Robbing Meter',
+            distance = 2,
+        })
+    end
+end
+
+function RemoveTarget()
+    if Config.Target == 'qb' then
+        exports['qb-target']:RemoveTargetModel(Config.meterModels)
+    elseif Config.Target == 'ox' then
+        exports.ox_target:removeModel(Config.meterModels)
+    end
+end
+
+AddEventHandler('onResourceStart', function(resourceName)
+    if (GetCurrentResourceName() ~= resourceName) then
+        return
+    end
+    InitializeResource()
 end)
 
-function StartCooldown()
-	OnCooldown = true
-	SetTimeout(Config.Cooldown * 1000, function()
-		OnCooldown = false
-	end)
+AddEventHandler('onResourceStop', function(resourceName)
+    if (GetCurrentResourceName() ~= resourceName) then
+        return
+    end
+    RemoveTarget()
+end)
+
+function InitializeResource()
+    target()
 end
 
-function Target()
-	if not OnCooldown then
-		if Config.Framework == 'qb' then
-			exports['qb-target']:AddTargetModel(Config.Meters, {
-				options = {
-					{
-						action = function()
-							RobMeter()
-						end,
-						icon = 'fas fa-screwdriver',
-						item = 'screwdriverset',
-						label = Lang:t('info.rob'),
-					},
-				},
-				distance = 2
-			})
-		elseif Config.Framework == 'ox' then
-			exports.ox_target:addModel(Config.Meters, {
-				name = Lang:t('info.rob'),
-				onSelect = function()
-					RobMeter()
-				end,
-				icon = 'fa-solid fa-handcuffs',
-				items = 'screwdriverset',
-				label = 'Rob Parking Meter',
-				distance = 2,
-			})
-		end
-	else
-		QBCore.Functions.Notify(Lang:t('notify.cooldown'), 'error')
-	end
+function CleanUpResource()
+    removeTarget()
 end
 
-function RobMeter()
-	local ped = PlayerPedId()
+RegisterNetEvent('cbd-meters:client:addPoliceAlert', function(message, coords)
+    local blip = AddBlipForCoord(coords.x, coords.y, coords.z)
+    SetBlipSprite(blip, sprite or 8)
+    SetBlipColour(blip, color or 3)
+    SetBlipScale(blip, scale or 0.8)
+    SetBlipAsShortRange(blip, true)
+    AddTextEntry(message, message)
+    BeginTextCommandSetBlipName(message)
+    EndTextCommandSetBlipName(blip)
+    Wait(50000)
+    RemoveBlip(blip)
+end)
 
-	if Config.Framework == 'qb' then
-		if not OnCooldown then
-			if QBCore.Functions.HasItem('screwdriverset') and not IsPedInAnyVehicle(ped, true) then
-				local success = exports['qb-minigames']:Skillbar('medium') -- calling like this will just change difficulty and still use 1234
+RegisterNetEvent('cbd-meters:client:sendNotification', function(message, _type, time)
+    notifyPlayer(message, _type, time)
+end)
 
-				if success then
-					QBCore.Functions.Progressbar('RobMeter', Lang:t('progress.grabcash'), Config.LootTime * 1000, false, true, {
-						disableMovement = true,
-						disableCarMovement = true,
-						disableMouse = false,
-						disableCombat = true,
-					}, {
-						animDict = 'anim@gangops@facility@servers@',
-						anim = 'hotwire',
-						flags = 16,
-					}, {}, {}, function() -- Done
-						PoliceAlert()
-						TriggerServerEvent('cbd-meters:server:RobMeter')
-						StartCooldown()
-					end, function() -- Cancel
-						QBCore.Functions.Notify(Lang:t('notify.failed'), 'error')
-					end)
-				else
-					QBCore.Functions.Notify(Lang:t('notify.failed'), 'error')
-				end
-			end
-		elseif OnCooldown then
-			QBCore.Functions.Notify(Lang:t('notify.cooldown'), 'error')
-		else
-			QBCore.Functions.Notify(Lang:t('notify.failed'), 'error')
-		end
-	elseif Config.Framework == 'ox' then
-		local oxsuccess = lib.skillCheck({ 'medium', 'medium', 'medium', 'medium' }) -- uses default "E" muscle
-
-		if not OnCooldown and exports.ox_inventory:Search('slots', 'weapon_wrench') and not IsPedInAnyVehicle(ped, true) then
-			if oxsuccess then
-				if lib.progressBar({
-						duration = Config.LootTime * 1000,
-						label = 'Grabbing Extra Change!',
-						useWhileDead = false,
-						canCancel = true,
-						disable = {
-							move = true,
-							car = true,
-							mouse = false,
-							combat = true
-						},
-						anim = {
-							dict = 'anim@gangops@facility@servers@',
-							clip = 'hotwire'
-						},
-					}) then
-					PoliceAlert()
-					TriggerServerEvent('cbd-meters:server:RobMeter')
-					StartCooldown()
-				else
-					exports.ox_notify:Alert('error', 'Failed to rob parking meter')
-				end
-			end
-		end
-	end
-end
+RegisterNetEvent('cbd-meters:client:updateList', function(list)
+    robbedMeters = list
+end)
