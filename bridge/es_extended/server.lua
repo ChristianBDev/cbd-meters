@@ -18,5 +18,6 @@ end
 
 Framework.AddAccountBalance = function(src, _type, amount)
     local xPlayer = ESX.GetPlayerFromId(src)
+    if _type == 'cash' then _type = 'money' end
     return xPlayer.addAccountMoney(_type, amount)
 end

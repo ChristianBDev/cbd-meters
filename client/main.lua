@@ -73,6 +73,24 @@ local function progress(entity)
                     ClearPedTasks(ped)
                 end
         end)
+    elseif Config.Progress == 'esx' then
+        ESX.Progressbar("Robbing Meter", Config.LootTime * 1000,{
+            FreezePlayer = true,
+            animation ={
+                type = "anim",
+                dict = 'anim@gangops@facility@servers@',
+                lib = 'hotwire',
+            },
+            onFinish = function()
+                startCooldown()
+                local hash = GetEntityModel(entity)
+                TriggerServerEvent('cbd-meters:server:robmeter', hash)
+                ClearPedTasks(ped)
+            end,
+            onCancel = function()
+                ClearPedTasks(ped)
+            end,
+        })
     elseif Config.Progress == 'ox' then
         if lib.progressBar({
             duration = Config.LootTime * 1000,
@@ -156,7 +174,6 @@ local function target()
                 robMeter(entity.entity)
             end,
             icon = 'fa-solid fa-coins',
-            items = 'screwdriverset',
             label = 'Robbing Meter',
             distance = 2,
         })
