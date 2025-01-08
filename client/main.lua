@@ -165,20 +165,6 @@ function RemoveTarget()
     end
 end
 
-AddEventHandler('onResourceStart', function(resourceName)
-    if (GetCurrentResourceName() ~= resourceName) then
-        return
-    end
-    InitializeResource()
-end)
-
-AddEventHandler('onResourceStop', function(resourceName)
-    if (GetCurrentResourceName() ~= resourceName) then
-        return
-    end
-    RemoveTarget()
-end)
-
 function InitializeResource()
     target()
 end
