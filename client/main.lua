@@ -85,9 +85,12 @@ local function progress(entity)
                 mouse = false,
                 combat = false,
             },
-            animation = {
+            anim = {
                 dict = 'anim@gangops@facility@servers@',
                 clip = 'hotwire',
+                flag = 16,
+                blendIn = 8.0,
+                blendOut = 8.0,
             },
         }) then
             startCooldown()
