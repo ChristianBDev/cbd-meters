@@ -129,7 +129,8 @@ local function target()
             options = {
                 {
                     canInteract = function(entity)
-                        if onCooldown then return false end
+                        if onCooldown then return end
+                        if IsPedInAnyVehicle(PlayerPedId(), true) then return end
                         if not DoesEntityExist(entity) then return end
                         return verifyMeterStatus(entity)
                     end,
@@ -146,8 +147,9 @@ local function target()
     elseif Config.Target == 'ox' then
         exports.ox_target:addModel(Config.meterModels, {
             canInteract = function(entity)
-                if onCooldown then return false end
-                if not DoesEntityExist(entity) then return false end
+                if onCooldown then return end
+                if IsPedInAnyVehicle(PlayerPedId(), true) then return end
+                if not DoesEntityExist(entity) then return end
                 return verifyMeterStatus(entity)
             end,
             onSelect = function(entity)

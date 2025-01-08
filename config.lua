@@ -1,10 +1,10 @@
 Config = Config or {}
 
-Config.Inventory 	= 'qb' -- qb, ox, esx
-Config.Target 	 	= 'qb' -- qb, ox
-Config.NotifyType	= 'qb' -- qb, ox, esx, custom
-Config.Progress   	= 'qb' -- qb, ox
-Config.SkillCheck 	= 'qb' -- qb, ox
+Config.Inventory 	= 'ox' -- qb, ox, esx
+Config.Target 	 	= 'ox' -- qb, ox
+Config.NotifyType	= 'ox' -- qb, ox, esx, custom
+Config.Progress   	= 'ox' -- qb, ox
+Config.SkillCheck 	= 'ox' -- qb, ox
 
 Config.Money      	= math.random(100, 500)  -- Gives random amount within range
 Config.AlertChance 	= 25
