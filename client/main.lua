@@ -41,7 +41,7 @@ local function verifyMeterStatus(entity)
     return true
 end
 
-local function progress()
+local function progress(entity)
     local ped = PlayerPedId()
     if Config.Progress == 'qb' then
         exports['progressbar']:Progress({
@@ -65,11 +65,13 @@ local function progress()
             propTwo = {}
             }, function(cancelled)
                 if not cancelled then
-                ClearPedTasks(ped)
-                startCooldown()
-            else
-                ClearPedTasks(ped)
-            end
+                    startCooldown()
+                    local hash = GetEntityModel(entity)
+                    TriggerServerEvent('cbd-meters:server:robmeter', hash)
+                    ClearPedTasks(ped)
+                else
+                    ClearPedTasks(ped)
+                end
         end)
     elseif Config.Progress == 'ox' then
         if lib.progressBar({
@@ -88,8 +90,10 @@ local function progress()
                 clip = 'hotwire',
             },
         }) then
-            ClearPedTasks(ped)
             startCooldown()
+            local hash = GetEntityModel(entity)
+            TriggerServerEvent('cbd-meters:server:robmeter', hash)
+            ClearPedTasks(ped)
         else
             ClearPedTasks(ped)
         end
@@ -113,10 +117,7 @@ local function robMeter(entity)
         notifyPlayer('You Failed The MiniGame', 'error', 5000)
         return
     end
-    progress()
-    Wait(Config.LootTime * 1000)
-    local hash = GetEntityModel(entity)
-    TriggerServerEvent('cbd-meters:server:robmeter', hash)
+    progress(entity)
 end
 
 local function target()
@@ -126,7 +127,7 @@ local function target()
                 {
                     canInteract = function(entity)
                         if onCooldown then return false end
-                        if not DoesEntityExist(entity) then return false end
+                        if not DoesEntityExist(entity) then return end
                         return verifyMeterStatus(entity)
                     end,
                     action = function(entity)
@@ -170,14 +171,14 @@ function InitializeResource()
 end
 
 function CleanUpResource()
-    removeTarget()
+    RemoveTarget()
 end
 
 RegisterNetEvent('cbd-meters:client:addPoliceAlert', function(message, coords)
     local blip = AddBlipForCoord(coords.x, coords.y, coords.z)
-    SetBlipSprite(blip, sprite or 8)
-    SetBlipColour(blip, color or 3)
-    SetBlipScale(blip, scale or 0.8)
+    SetBlipSprite(blip, 8)
+    SetBlipColour(blip, 3)
+    SetBlipScale(blip, 0.8)
     SetBlipAsShortRange(blip, true)
     AddTextEntry(message, message)
     BeginTextCommandSetBlipName(message)
