@@ -126,10 +126,12 @@ local function robMeter(entity)
     local ped = PlayerPedId()
     TaskTurnPedToFaceCoord(ped, entCoords.x, entCoords.y, entCoords.z, 1000)
     local success = false
+    local difficulty = Config.SkillCheckDifficulty
+    local keys = Config.SkillCheckKeys
     if Config.SkillCheck == 'qb' then
-        success = exports['qb-minigames']:Skillbar('easy', '1234')
+        success = exports['qb-minigames']:Skillbar(difficulty, keys)
     elseif Config.SkillCheck == 'ox' then
-        success = lib.skillCheck({ 'easy', 'easy', 'easy', 'easy' }, { '1', '2', '3', '4' })
+        success = lib.skillCheck({difficulty, difficulty, difficulty, difficulty}, { "1", "2", "3", "4" }) -- add however many you want for difficulty
     elseif Config.SkillCheck == 'custom' then
         -- do custom skillcheck (you need to make this yourself)
     end

@@ -1,5 +1,7 @@
 Config = Config or {}
 
+Config.DevDebug 	= false -- Set to true to enable onResourceStart and onResourceStop events
+
 Config.Target 	 	= 'qb' -- qb, ox
 Config.NotifyType	= 'qb' -- qb, ox, esx, custom
 Config.Progress   	= 'qb' -- qb, ox, esx
