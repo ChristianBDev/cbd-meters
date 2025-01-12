@@ -10,4 +10,6 @@ Ox Core:
  - ox_target | https://github.com/overextended/ox_target
  - ox_inventory | https://github.com/overextended/ox_inventory
 
-**VIDEO**: https://youtu.be/sKGusGWZGSQ
+[**VIDEO**](https://www.youtube.com/watch?v=sKGusGWZGSQ)
+
+[**UPDATE 1.1.0**](https://www.youtube.com/watch?v=jBgrc5v4qZE)
