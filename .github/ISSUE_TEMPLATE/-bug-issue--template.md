@@ -1,7 +1,7 @@
 ---
-name: "[BUG] | Issue name here"
+name: "[Bug/Issue] Template"
 about: Describe the issue here!
-title: ''
+title: "[BUG] | Issue name here"
 labels: ''
 assignees: ''
 
