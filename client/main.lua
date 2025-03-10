@@ -4,7 +4,7 @@ local onCooldown = false
 local function startCooldown()
     onCooldown = true
     SetTimeout(Config.Cooldown * 1000, function()
- 		onCooldown = false
+        onCooldown = false
     end)
 end
 
@@ -125,13 +125,11 @@ local function robMeter(entity)
     local entCoords = GetEntityCoords(entity)
     local ped = PlayerPedId()
     TaskTurnPedToFaceCoord(ped, entCoords.x, entCoords.y, entCoords.z, 1000)
-    local success = false
-    local difficulty = Config.SkillCheckDifficulty
-    local keys = Config.SkillCheckKeys
+    local success = lib.skillCheckActive() or false
     if Config.SkillCheck == 'qb' then
-        success = exports['qb-minigames']:Skillbar(difficulty, keys)
+        success = exports['qb-minigames']:Skillbar("easy") -- "easy" | "medium" | "hard"
     elseif Config.SkillCheck == 'ox' then
-        success = lib.skillCheck({difficulty, difficulty, difficulty, difficulty}, { "1", "2", "3", "4" }) -- add however many you want for difficulty
+        success = lib.skillCheck({ "easy", "easy", "easy", "easy" }, { "1", "2", "3", "4" }) -- "easy" | "medium" | "hard" then keys
     elseif Config.SkillCheck == 'custom' then
         -- do custom skillcheck (you need to make this yourself)
     end

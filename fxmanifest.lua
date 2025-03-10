@@ -2,7 +2,7 @@ fx_version 'cerulean'
 game 'gta5'
 author 'ChristianBDev & MrNewb'
 description 'Parking meter script'
-version '1.1.1'
+version '1.1.2'
 
 client_scripts {
 	'bridge/**/client.lua',

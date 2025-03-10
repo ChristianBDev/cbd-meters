@@ -1,11 +1,11 @@
 Config = Config or {}
 
-Config.DevDebug 	= false -- Set to true to enable onResourceStart and onResourceStop events
+Config.DevDebug 	= true -- Set to true to enable onResourceStart and onResourceStop events
 
-Config.Target 	 	= 'qb' -- qb, ox
-Config.NotifyType	= 'qb' -- qb, ox, esx, custom
-Config.Progress   	= 'qb' -- qb, ox, esx
-Config.SkillCheck 	= 'qb' -- qb, ox
+Config.Target 	 	= 'ox' -- qb, ox
+Config.NotifyType	= 'ox' -- qb, ox, esx, custom
+Config.Progress   	= 'ox' -- qb, ox, esx
+Config.SkillCheck 	= 'ox'  -- qb, ox, custom
 
 Config.Money      	= math.random(100, 500)  -- Gives random amount within range
 Config.AlertChance 	= 25
