@@ -56,16 +56,32 @@ local function robMeter(entity)
 
     if success then
         if math.random(100) <= Config.PoliceAlertChance then
-            local policeplayers = Bridge.Framework.GetFrameworkJobs()['police']
+            local jobData = Bridge.Framework.GetPlayerJobData()
+            local policePlayerCount = 0
 
-            if not policeplayers then
-                Bridge.Notify.SendNotify(Bridge.Language.Locale("error.no_police"), 'error', 5000)
-                return
+            if not jobData or (jobData.name ~= "police" and jobData.name ~= "sheriff") then Bridge.Notify.SendNotify(Bridge.Language.Locale("error.no_police"), 'error', 5000) return end
+
+            for k, v in pairs(jobData) do
+                if v and (v == "police" or v == "sheriff") then
+                    policePlayerCount = policePlayerCount + 1
+                end
             end
 
-            for _, src in pairs(policeplayers) do
-                Bridge.Notify.SendNotify(src, Bridge.Language.Locale("info.police_alert"), entCoords)
-            end
+            if policePlayerCount == 0 then Bridge.Notify.SendNotify(Bridge.Language.Locale("error.no_police"), 'error', 5000) return end
+
+            Bridge.Dispatch.SendAlert({
+                message = Bridge.Language.Locale("info.police_alert"),
+                code = "10-90",
+                coords = entCoords,
+                jobs = {"police", "sheriff"},
+                blipData = {
+                    sprite = 500,
+                    color = 1,
+                    scale = 1.0
+                },
+                time = 300000 * 3, -- 15 minutes
+                icon = "fas fa-exclamation-triangle"
+            })
             Bridge.Notify.SendNotify(Bridge.Language.Locale("error.cops_called"), 'error', 5000)
         end
 
