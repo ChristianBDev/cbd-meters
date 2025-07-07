@@ -1,0 +1,27 @@
+{
+    "success": {
+        "robbery_complete": "You successfully robbed the parking meter!"
+    },
+
+    "error": {
+        "failed_minigame": "You Failed The minigame",
+        "already_robbed": "This meter has already been robbed recently",
+        "cops_called": "Cops may have been called, run away!",
+        "missing_tools": "You need tools to rob this meter",
+        "no_meter": "No parking meter found nearby",
+        "cancelled": "You failed to rob the parking meter"
+    },
+
+    "info": {
+        "rob_meter": "Robbing Parking Meter",
+        "police_alert": "Parking Meter Robbery",
+        "take_money": "Take some money",
+        "searching": "Searching for money...",
+        "lockpicking": "Picking the lock..."
+    },
+
+    "progress": {
+        "breaking_lock": "Breaking the lock...",
+        "collecting_money": "Collecting money..."
+    }
+}

@@ -1,34 +1,12 @@
 local robbedMeters = {}
 local onCooldown = false
+local Bridge = exports['community_bridge']:Bridge()
 
 local function startCooldown()
     onCooldown = true
     SetTimeout(Config.Cooldown * 1000, function()
         onCooldown = false
     end)
-end
-
-local function notifyPlayer(message, _type, time)
-    local notifyType = Config.NotifyType
-    if notifyType == 'qb' then
-        return TriggerEvent('QBCore:Notify', message, _type, time)
-    elseif notifyType == 'mythic_notify' then
-        return exports['mythic_notify']:SendAlert('inform', message, time)
-    elseif notifyType == 'pNotify' then
-        return exports['pNotify']:SendNotification({ text = message, type = _type, timeout = time, layout = 'centerRight' })
-    elseif notifyType == 'esx' then
-        return ESX.ShowNotification(message, _type, time)
-    elseif notifyType == 'ox' then
-        return exports.ox_lib:notify({ description = message, type = _type, position = 'top' })
-    elseif notifyType == 't-notify' then
-        return exports['t-notify']:Alert({ style = 'info', message = message, duration = time, })
-    elseif notifyType == 'wasabi_notify' then
-        return exports.wasabi_notify:notify(_type, message, time, _type)
-    elseif notifyType == 'custom' then
-        return print("You have not set up a custom notify")
-    else
-        return print("You have not configured a notify")
-    end
 end
 
 local function verifyMeterStatus(entity)
@@ -41,129 +19,153 @@ local function verifyMeterStatus(entity)
     return true
 end
 
-local function progress(entity)
-    local ped = PlayerPedId()
-    if Config.Progress == 'qb' then
-        exports['progressbar']:Progress({
-            name = "Robbing Meter",
-            duration = Config.LootTime * 1000,
-            label = "Robbing Meter",
-            useWhileDead = false,
-            canCancel = true,
-            controlDisables = {
-                disableMovement = true,
-                disableCarMovement = true,
-                disableMouse = false,
-                disableCombat = false,
-            },
-            animation = {
-                animDict = 'anim@gangops@facility@servers@',
-                anim = 'hotwire',
-                flags = 16,
-            },
-            prop = {},
-            propTwo = {}
-            }, function(cancelled)
-                if not cancelled then
-                    startCooldown()
-                    local hash = GetEntityModel(entity)
-                    TriggerServerEvent('cbd-meters:server:robmeter', hash)
-                    ClearPedTasks(ped)
-                else
-                    ClearPedTasks(ped)
-                end
-        end)
-    elseif Config.Progress == 'esx' then
-        ESX.Progressbar("Robbing Meter", Config.LootTime * 1000,{
-            FreezePlayer = true,
-            animation ={
-                type = "anim",
-                dict = 'anim@gangops@facility@servers@',
-                lib = 'hotwire',
-            },
-            onFinish = function()
-                startCooldown()
-                local hash = GetEntityModel(entity)
-                TriggerServerEvent('cbd-meters:server:robmeter', hash)
-                ClearPedTasks(ped)
-            end,
-            onCancel = function()
-                ClearPedTasks(ped)
-            end,
-        })
-    elseif Config.Progress == 'ox' then
-        if lib.progressBar({
-            duration = Config.LootTime * 1000,
-            label = 'Robbing Meter',
-            useWhileDead = false,
-            canCancel = true,
-            disable = {
-                move = true,
-                car = true,
-                mouse = false,
-                combat = false,
-            },
-            anim = {
-                dict = 'anim@gangops@facility@servers@',
-                clip = 'hotwire',
-                flag = 16,
-                blendIn = 8.0,
-                blendOut = 8.0,
-            },
-        }) then
-            startCooldown()
-            local hash = GetEntityModel(entity)
-            TriggerServerEvent('cbd-meters:server:robmeter', hash)
-            ClearPedTasks(ped)
-        else
-            ClearPedTasks(ped)
-        end
-    end
-end
-
 local function robMeter(entity)
     local entCoords = GetEntityCoords(entity)
     local ped = PlayerPedId()
+
     TaskTurnPedToFaceCoord(ped, entCoords.x, entCoords.y, entCoords.z, 1000)
-    local success = lib.skillCheckActive() or false
-    if Config.SkillCheck == 'qb' then
-        success = exports['qb-minigames']:Skillbar("easy") -- "easy" | "medium" | "hard"
-    elseif Config.SkillCheck == 'ox' then
-        success = lib.skillCheck({ "easy", "easy", "easy", "easy" }, { "1", "2", "3", "4" }) -- "easy" | "medium" | "hard" then keys
-    elseif Config.SkillCheck == 'custom' then
-        -- do custom skillcheck (you need to make this yourself)
-    end
-    if not success then
+
+    if not BeginMiniGame(entity) then
         StopAnimTask(ped, dict, animName, 300)
-        notifyPlayer('You Failed The MiniGame', 'error', 5000)
+        Bridge.Notify.SendNotify(Bridge.Language.Locale('error.failed_minigame'), 'error', 5000)
+        ClearPedTasks(ped)
         return
     end
-    progress(entity)
+    local success = Bridge.ProgressBar.Open({
+        duration = 5000,
+        label = Bridge.Language.Locale('info.rob_meter'),
+        canCancel = true,
+        disable = {
+            move = true,
+            car = true,
+            combat = true
+        },
+        anim = {
+            dict = "anim@gangops@facility@servers@",
+            clip = "hotwire",
+            flag = 16
+        }
+    }, function(cancelled)
+        if cancelled then
+            StopAnimTask(ped, "anim@gangops@facility@servers@", "hotwire", 300)
+            Bridge.Notify.SendNotify(Bridge.Language.Locale('error.cancelled'), 'error', 5000)
+            ClearPedTasks(ped)
+            return
+        end
+    end)
+
+    if success then
+        if math.random(100) <= Config.PoliceAlertChance then
+            local policeplayers = Bridge.Framework.GetFrameworkJobs()['police']
+
+            if not policeplayers then
+                Bridge.Notify.SendNotify(Bridge.Language.Locale("error.no_police"), 'error', 5000)
+                return
+            end
+
+            for _, src in pairs(policeplayers) do
+                Bridge.Notify.SendNotify(src, Bridge.Language.Locale("info.police_alert"), entCoords)
+            end
+            Bridge.Notify.SendNotify(Bridge.Language.Locale("error.cops_called"), 'error', 5000)
+        end
+
+        TriggerServerEvent('cbd-meters:server:robmeter', GetEntityModel(entity))
+        ClearPedTasks(ped)
+        startCooldown()
+    end
 end
 
-local function target()
-    if Config.Target == 'qb' then
-        exports['qb-target']:AddTargetModel(Config.meterModels, {
-            options = {
-                {
-                    canInteract = function(entity)
-                        if onCooldown then return end
-                        if IsPedInAnyVehicle(PlayerPedId(), true) then return end
-                        if not DoesEntityExist(entity) then return end
-                        return verifyMeterStatus(entity)
-                    end,
-                    action = function(entity)
-                        robMeter(entity)
-                    end,
-                    item = 'screwdriverset',
-                    icon = 'fas fa-coins',
-                    label = "Take some money?",
-                },
-            },
-            distance = 2,
+function BeginMiniGame(entity)
+    if not DoesEntityExist(entity) then return Bridge.Notify.SendNotify(Bridge.Language.Locale('error.no_meter'), 'error', 5000) end
+
+    if Config.MiniGame == "ox" then
+        local result = lib.skillCheck({'easy', 'easy', 'easy', 'easy'}, {'w', 'a', 's', 'd'})
+        return result
+    elseif Config.MiniGame == "bagus" then
+        local result = exports['lockpick']:startLockpick()
+        return result
+    elseif Config.MiniGame == "ps-ui" then
+        local returnvalue = false
+        exports['ps-ui']:Circle(function(success)
+            if success then
+                returnvalue = true
+            else
+                returnvalue = false
+            end
+        end, 3, 20000)
+        return returnvalue
+    elseif Config.MiniGame == "bl-progress" then
+        local success = exports.bl_ui:Progress(3, 50)
+        return success
+    elseif Config.MiniGame == "bl-keyspam" then
+        local success = exports.bl_ui:KeySpam(3, 50)
+        return success
+    elseif Config.MiniGame == "bl-circle" then
+        local success = exports.bl_ui:CircleProgress(3, 50)
+        return success
+    elseif Config.MiniGame == "bl-printlock" then
+        local success = exports.bl_ui:PrintLock(3, {
+            grid = 4,
+            duration = 5000,
+            target = 4
         })
-    elseif Config.Target == 'ox' then
-        exports.ox_target:addModel(Config.meterModels, {
+        return success
+    elseif Config.MiniGame == "t3_lockpick" then
+        local returnvalue = false
+        local success = exports["t3_lockpick"]:startLockpick(1.0, 2, 5)
+        if success then
+            returnvalue = true
+        else
+            returnvalue = false
+        end
+        return returnvalue
+    elseif Config.MiniGame == "bit-unlock" then
+        -- untested, I dont own this to test
+        local returnvalue = nil
+        TriggerEvent("bit-unlock:start", "lockpick", "easy", function(success)
+            if success then
+                returnvalue = true
+            else
+                returnvalue = false
+            end
+        end)
+        while returnvalue == nil do
+            Wait(0)
+        end
+        return returnvalue
+    elseif Config.MiniGame == "xmmx" then
+        local success = exports.xmmx_circlesgame:StartCircleGame("medium", 50, "letters", "Test Game:")
+        return success
+    elseif Config.MiniGame == "rainmadlockpick" then
+        -- he doesnt list if a bool is returned on false and closed my ticket when I asked.
+        local success = exports['rm_minigames']:timedLockpick(200)
+        return success or false
+    elseif Config.MiniGame == "rainmadaction" then
+        -- he doesnt list if a bool is returned on false and closed my ticket when I asked.
+        local success = exports['rm_minigames']:timedAction(3)
+        return success or false
+    elseif Config.MiniGame == "rainmadquick" then
+        -- he doesnt list if a bool is returned on false and closed my ticket when I asked.
+        local success = exports['rm_minigames']:quickTimeEvent("easy")
+        return success or false
+    elseif Config.MiniGame == "rainmadmash" then
+        -- he doesnt list if a bool is returned on false and closed my ticket when I asked.
+        local success = exports['rm_minigames']:buttonMashing(5, 10)
+        return success or false
+    elseif Config.MiniGame == "rainmadangled" then
+        -- he doesnt list if a bool is returned on false and closed my ticket when I asked.
+        local success = exports['rm_minigames']:angledLockpick("easy")
+        return success or false
+    else
+        return true
+    end
+end
+
+RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
+    Bridge.Target.AddModel(Config.meterModels, {
+        {
+            label = Bridge.Language.Locale('info.take_money'),
+            icon = Bridge.Language.Locale('info.icon'),
             canInteract = function(entity)
                 if onCooldown then return end
                 if IsPedInAnyVehicle(PlayerPedId(), true) then return end
@@ -173,44 +175,42 @@ local function target()
             onSelect = function(entity)
                 robMeter(entity.entity)
             end,
-            icon = 'fa-solid fa-coins',
-            label = 'Robbing Meter',
-            distance = 2,
-        })
-    end
-end
-
-function RemoveTarget()
-    if Config.Target == 'qb' then
-        exports['qb-target']:RemoveTargetModel(Config.meterModels)
-    elseif Config.Target == 'ox' then
-        exports.ox_target:removeModel(Config.meterModels)
-    end
-end
-
-function InitializeResource()
-    target()
-end
-
-function CleanUpResource()
-    RemoveTarget()
-end
-
-RegisterNetEvent('cbd-meters:client:addPoliceAlert', function(message, coords)
-    local blip = AddBlipForCoord(coords.x, coords.y, coords.z)
-    SetBlipSprite(blip, 8)
-    SetBlipColour(blip, 3)
-    SetBlipScale(blip, 0.8)
-    SetBlipAsShortRange(blip, true)
-    AddTextEntry(message, message)
-    BeginTextCommandSetBlipName(message)
-    EndTextCommandSetBlipName(blip)
-    Wait(50000)
-    RemoveBlip(blip)
+            items = "screwdriverset",
+            distance = 2
+        }
+    })
 end)
 
-RegisterNetEvent('cbd-meters:client:sendNotification', function(message, _type, time)
-    notifyPlayer(message, _type, time)
+AddEventHandler('onResourceStart', function(resourceName)
+    if resourceName == GetCurrentResourceName() then
+        Bridge.Target.AddModel(Config.meterModels, {
+            {
+                label = Bridge.Language.Locale('info.take_money'),
+                icon = "fas fa-coins",
+                canInteract = function(entity)
+                    if onCooldown then return end
+                    if IsPedInAnyVehicle(PlayerPedId(), true) then return end
+                    if not DoesEntityExist(entity) then return end
+                    return verifyMeterStatus(entity)
+                end,
+                onSelect = function(entity)
+                    robMeter(entity)
+                end,
+                items = "screwdriverset",
+                distance = 2
+            }
+        })
+    end
+end)
+
+RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
+    Bridge.Target.RemoveModel(Config.meterModels)
+end)
+
+AddEventHandler('onResourceStop', function(resourceName)
+    if resourceName == GetCurrentResourceName() then
+        Bridge.Target.RemoveModel(Config.meterModels)
+    end
 end)
 
 RegisterNetEvent('cbd-meters:client:updateList', function(list)
