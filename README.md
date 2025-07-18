@@ -2,7 +2,7 @@
 
 ## Dependencies:
 
-`ox_lib` | https://github.com/CommunityOx/ox_lib
+`ox_lib` | https://github.com/CommunityOx/ox_lib <br />
 `community_bridge` | https://github.com/The-Order-Of-The-Sacred-Framework/community_bridge
 
 ## Features:
@@ -25,6 +25,7 @@
 ## Configuration:
 
 -   Open `cbd-meters/config.lua`.
+-   Change configuration settings
 
 ## Previews:
 
