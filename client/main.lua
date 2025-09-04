@@ -198,7 +198,7 @@ AddEventHandler('onResourceStart', function(resourceName)
         Bridge.Target.AddModel(Config.meterModels, {
             {
                 label = Bridge.Language.Locale('info.take_money'),
-                icon = "fas fa-coins",
+                icon = Bridge.Language.Locale('info.icon'),
                 canInteract = function(entity)
                     if onCooldown then return end
                     if IsPedInAnyVehicle(PlayerPedId(), true) then return end
