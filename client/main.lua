@@ -45,35 +45,29 @@ local function robMeter(entity)
             clip = "hotwire",
             flag = 16
         }
-    }, function(cancelled)
-        if cancelled then
-            StopAnimTask(ped, "anim@gangops@facility@servers@", "hotwire", 300)
-            Bridge.Notify.SendNotify(Bridge.Language.Locale('error.cancelled'), 'error', 5000)
-            ClearPedTasks(ped)
-            return
-        end
-    end)
+    })
 
     if success then
         if math.random(100) <= Config.PoliceAlertChance then
             local jobData = Bridge.Framework.GetPlayerJobData()
             local policePlayerCount = 0
 
-            if not jobData or (jobData.name ~= "police" and jobData.name ~= "sheriff") then Bridge.Notify.SendNotify(Bridge.Language.Locale("error.no_police"), 'error', 5000) return end
+            if not jobData or (jobData.name ~= "police" and jobData.name ~= "sheriff") then
+                Bridge.Notify.SendNotify(Bridge.Language.Locale("error.no_police"), 'error', 5000)
+                return
+            end
 
-            for k, v in pairs(jobData) do
+            for _, v in pairs(jobData) do
                 if v and (v == "police" or v == "sheriff") then
                     policePlayerCount = policePlayerCount + 1
                 end
             end
 
-            if policePlayerCount == 0 then Bridge.Notify.SendNotify(Bridge.Language.Locale("error.no_police"), 'error', 5000) return end
-
             Bridge.Dispatch.SendAlert({
                 message = Bridge.Language.Locale("info.police_alert"),
                 code = "10-90",
                 coords = entCoords,
-                jobs = {"police", "sheriff"},
+                jobs = { "police", "sheriff" },
                 blipData = {
                     sprite = 500,
                     color = 1,
@@ -92,10 +86,13 @@ local function robMeter(entity)
 end
 
 function BeginMiniGame(entity)
-    if not DoesEntityExist(entity) then return Bridge.Notify.SendNotify(Bridge.Language.Locale('error.no_meter'), 'error', 5000) end
+    if not DoesEntityExist(entity) then
+        return Bridge.Notify.SendNotify(Bridge.Language.Locale('error.no_meter'), 'error',
+            5000)
+    end
 
     if Config.MiniGame == "ox" then
-        local result = lib.skillCheck({'easy', 'easy', 'easy', 'easy'}, {'w', 'a', 's', 'd'})
+        local result = lib.skillCheck({ 'easy', 'easy', 'easy', 'easy' }, { 'w', 'a', 's', 'd' })
         return result
     elseif Config.MiniGame == "bagus" then
         local result = exports['lockpick']:startLockpick()
@@ -189,7 +186,7 @@ RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
                 return verifyMeterStatus(entity)
             end,
             onSelect = function(entity)
-                robMeter(entity.entity)
+                robMeter(entity)
             end,
             items = "screwdriverset",
             distance = 2
