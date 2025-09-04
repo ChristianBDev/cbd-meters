@@ -3,7 +3,7 @@
 ## Dependencies:
 
 `ox_lib` | https://github.com/CommunityOx/ox_lib <br />
-`community_bridge` | https://github.com/The-Order-Of-The-Sacred-Framework/community_bridge
+`community_bridge` | https://github.com/TheOrderFiveM/community_bridge
 
 ## Features:
 
