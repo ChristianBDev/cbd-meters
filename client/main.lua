@@ -72,7 +72,7 @@ local function robMeter(entity)
                     color = 1,
                     scale = 1.0
                 },
-                time = 300000 * 3, -- 15 minutes
+                alertTime = 300000, -- 5 minutes
                 icon = "fas fa-exclamation-triangle"
             })
             Bridge.Notify.SendNotify(Bridge.Language.Locale("error.cops_called"), 'error', 5000)
