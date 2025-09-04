@@ -52,13 +52,12 @@ local function robMeter(entity)
             local jobData = Bridge.Framework.GetPlayerJobData()
             local policePlayerCount = 0
 
-            if not jobData or (jobData.name ~= "police" and jobData.name ~= "sheriff") then
-                Bridge.Notify.SendNotify(Bridge.Language.Locale("error.no_police"), 'error', 5000)
-                return
-            end
-
             for _, v in pairs(jobData) do
-                if v and (v == "police" or v == "sheriff") then
+                if v and jobData.name ~= nil then
+                    if not jobData or (jobData.name ~= "police" and jobData.name ~= "sheriff") then
+                        Bridge.Notify.SendNotify(Bridge.Language.Locale("error.no_police"), 'error', 5000)
+                        return
+                    end
                     policePlayerCount = policePlayerCount + 1
                 end
             end
