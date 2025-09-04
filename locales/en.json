@@ -18,7 +18,8 @@
         "police_alert": "Parking Meter Robbery",
         "take_money": "Take some money",
         "searching": "Searching for money...",
-        "lockpicking": "Picking the lock..."
+        "lockpicking": "Picking the lock...",
+        "icon": "fas fa-coins"
     },
 
     "progress": {
