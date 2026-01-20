@@ -1,6 +1,5 @@
 local robbedMeters = {}
 local onCooldown = false
-local Bridge = exports['community_bridge']:Bridge()
 
 local function startCooldown()
     onCooldown = true
@@ -173,7 +172,7 @@ function BeginMiniGame(entity)
     end
 end
 
-RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
+RegisterNetEvent('community_bridge:Client:OnPlayerLoaded', function()
     Bridge.Target.AddModel(Config.meterModels, {
         {
             label = Bridge.Language.Locale('info.take_money'),
@@ -194,28 +193,28 @@ RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
 end)
 
 AddEventHandler('onResourceStart', function(resourceName)
-    if resourceName == GetCurrentResourceName() then
-        Bridge.Target.AddModel(Config.meterModels, {
-            {
-                label = Bridge.Language.Locale('info.take_money'),
-                icon = Bridge.Language.Locale('info.icon'),
-                canInteract = function(entity)
-                    if onCooldown then return end
-                    if IsPedInAnyVehicle(PlayerPedId(), true) then return end
-                    if not DoesEntityExist(entity) then return end
-                    return verifyMeterStatus(entity)
-                end,
-                onSelect = function(entity)
-                    robMeter(entity)
-                end,
-                items = "screwdriverset",
-                distance = 2
-            }
-        })
-    end
+    if resourceName ~= GetCurrentResourceName() then return end
+
+    Bridge.Target.AddModel(Config.meterModels, {
+        {
+            label = Bridge.Language.Locale('info.take_money'),
+            icon = Bridge.Language.Locale('info.icon'),
+            canInteract = function(entity)
+                if onCooldown then return end
+                if IsPedInAnyVehicle(PlayerPedId(), true) then return end
+                if not DoesEntityExist(entity) then return end
+                return verifyMeterStatus(entity)
+            end,
+            onSelect = function(entity)
+                robMeter(entity)
+            end,
+            items = "screwdriverset",
+            distance = 2
+        }
+    })
 end)
 
-RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
+RegisterNetEvent('community_bridge:Client:OnPlayerUnload', function()
     Bridge.Target.RemoveModel(Config.meterModels)
 end)
 

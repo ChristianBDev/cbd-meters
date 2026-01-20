@@ -1,5 +1,4 @@
 local hitLocations = {}
-local Bridge = exports['community_bridge']:Bridge()
 
 local function collectReward(src, hash)
     local meterModels = Config.meterModels
