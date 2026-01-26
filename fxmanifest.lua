@@ -15,7 +15,8 @@ server_scripts {
 
 shared_scripts {
 	'@ox_lib/init.lua', -- comment out if not using ox_lib
-    'config.lua'
+    'config.lua',
+	'shared/bridge.lua'
 }
 
 files {
